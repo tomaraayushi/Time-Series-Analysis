@@ -1,0 +1,161 @@
+# Rolling Window Functions with Pandas
+
+# Rolling average air quality
+# Import and inspect ozone data here
+data = pd.read_csv('ozone.csv', parse_dates = ['date'], index_col = 'date')
+print(data.info())
+
+# Calculate 90d and 360d rolling mean for the last price
+data['90D'] = data['Ozone'].rolling(window = '90D').mean()
+data['360D'] = data['Ozone'].rolling(window = '360D').mean()
+
+# Plot data
+data['2010':].plot(title = 'New York City')
+plt.show()
+
+# Rolling 360-day median & std. deviation
+# Import and inspect ozone data here
+data = pd.read_csv('ozone.csv', parse_dates = ['date'], index_col = 'date').dropna()
+
+# Calculate the rolling mean and std here
+rolling_stats = data.Ozone.rolling(360).agg(['mean', 'std'])
+
+# Join rolling_stats with ozone data
+stats = data.join(rolling_stats)
+
+# Plot stats
+stats.plot(subplots = True)
+plt.show()
+
+# Rolling Quantiles
+# Resample, interpolate and inspect ozone data here
+data = data.resample('D').interpolate()
+data.info()
+
+# Create the rolling window
+rolling = data.Ozone.rolling(360)
+
+# Insert the rolling quantiles to the monthly returns
+data['q10'] = rolling.quantile(0.1)
+data['q50'] = rolling.quantile(0.5)
+data['q90'] = rolling.quantile(0.9)
+
+# Plot the data
+data.plot()
+plt.show()
+
+# Cumulative sum vs diff
+# Calculate differences
+differences = data.diff().dropna()
+
+# Select start price
+start_price = data.first('D')
+
+# Calculate cumulative sum
+cumulative_sum = start_price.append(differences).cumsum()
+
+# Validate cumulative sum equals data
+print(data.equals(cumulative_sum))
+
+# Cumualtive return
+# Define your investment
+investment = 1000
+
+# Calculate the daily returns here
+returns = data.pct_change()
+
+# Calculate the cumulative returns here
+returns_plus_one = returns + 1
+cumulative_return = returns_plus_one.cumprod()
+
+# Calculate and plot the investment return here 
+cumulative_return.mul(investment).plot()
+plt.show()
+
+# Import numpy
+import numpy as np
+
+# Define a multi_period_return function
+def multi_period_return(period_returns):
+    return np.prod(period_returns + 1) - 1
+    
+# Calculate daily returns
+daily_returns = data.pct_change()
+
+# Calculate rolling_annual_returns
+rolling_annual_returns = daily_returns.rolling(window = '360D').apply(multi_period_return)
+
+# Plot rolling_annual_returns
+rolling_annual_returns.mul(100).plot()
+plt.show()
+
+# Random Walk
+# Set seed here
+seed(42)
+
+# Create random_walk
+random_walk = normal(loc = .001, scale = .01, size = 2500)
+
+# Convert random_walk to pd.series
+random_walk = pd.Series(random_walk)
+
+# Create random_prices
+random_prices = random_walk.add(1).cumprod()
+
+# Plot random_prices here
+random_prices.mul(1000).plot()
+plt.show()
+
+# random Walk 
+# Set seed here
+seed(42)
+
+# Calculate daily_returns here
+daily_returns = fb.pct_change().dropna()
+
+# Get n_obs
+n_obs = daily_returns.count()
+
+# Create random_walk
+random_walk = choice(daily_returns, size = n_obs)
+
+# Convert random_walk to pd.series
+random_walk = pd.Series(random_walk)
+
+# Plot random_walk distribution
+sns.distplot(random_walk)
+plt.show()
+
+# Random walk
+# Select fb start price here
+start = fb.price.first('D')
+
+# Add 1 to random walk and append to start
+random_walk = random_walk.add(1)
+random_price = start.append(random_walk)
+
+# Calculate cumulative product here
+random_price = random_price.cumprod()
+
+# Insert into fb and plot
+fb['random'] = random_price
+fb.plot()
+plt.show()
+
+# Annual return correlations among several stocks
+# Inspect data here
+print(data.info())
+
+# Calculate year-end prices here
+annual_prices = data.resample('A').last()
+
+# Calculate annual returns here
+annual_returns = annual_prices.pct_change()
+
+# Calculate and print the correlation matrix here
+correlations = annual_returns.corr()
+print(correlations)
+
+# Visualize the correlations as heatmap here
+sns.heatmap(data = correlations, annot = True)
+plt.show()
